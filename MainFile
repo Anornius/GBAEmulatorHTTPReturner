@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NES Emulator with Frame Capture</title>
+    <script src="https://rawgit.com/bfirsh/jsnes/master/jsnes.js"></script>
+</head>
+<body>
+    <canvas id="nesCanvas" width="256" height="240"></canvas>
+    <script>
+        const canvas = document.getElementById('nesCanvas');
+        const context = canvas.getContext('2d');
+
+        // Configurar o emulador
+        const nes = new JSNES({
+            onFrame: function(framebuffer) {
+                // Aqui é onde pegamos o framebuffer e convertimos para JSON
+                let frameColors = [];
+                for (let i = 0; i < framebuffer.length; i++) {
+                    const color = framebuffer[i];
+                    const hexColor = "#" + ((1 << 24) + (color[0] << 16) + (color[1] << 8) + color[2]).toString(16).slice(1);
+                    frameColors.push(hexColor);
+                }
+                
+                const frameData = { pixels: frameColors };
+                console.log(frameData); // Aqui você exportaria isso para um JSON ou banco de dados.
+                
+                // Desenha a imagem na tela (pode ser removido ou modificado)
+                const imageData = context.createImageData(256, 240);
+                for (let i = 0; i < framebuffer.length; i++) {
+                    const color = framebuffer[i];
+                    const pixelIndex = i * 4;
+                    imageData.data[pixelIndex] = color[0];     // Red
+                    imageData.data[pixelIndex + 1] = color[1]; // Green
+                    imageData.data[pixelIndex + 2] = color[2]; // Blue
+                    imageData.data[pixelIndex + 3] = 255;     // Alpha
+                }
+                context.putImageData(imageData, 0, 0);
+            }
+        });
+
+        // Carregar uma ROM e começar a emulação
+        const romUrl = "sua_rom.nes";  // Coloque o caminho da ROM NES aqui
+        fetch(romUrl)
+            .then(response => response.arrayBuffer())
+            .then(rom => {
+                nes.loadROM(new Uint8Array(rom));
+                nes.start();
+            });
+    </script>
+</body>
+</html>
